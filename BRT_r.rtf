@@ -1,0 +1,126 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1404\cocoasubrtf470
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 library(dismo) # spatial distribution model\
+library(gbm) # to generate BRT models\
+### gbm.step --- fit a gbm model to response more variables, using cross-validation to estimate optimal number of trees\
+### gbm.plot ---  plot the partial dependence of response on predictors\
+### gbm.plot.fits --- plot fitted values from a gbm objective. can give more reliable shape of fitted surface than individual functions, particularly when predictor variables are correlated/ unevenly distributed sites\
+### gbm.interactions --- test if interactions can be detected/modeled, report the relative strength of these.\
+\
+#####################---call data----####################\
+data <- brt_table\
+newdata <- data[-which(is.na(data[,9])),] # exclude na. values\
+\
+#####################---brt fit models----####################\
+# perform a cross-validation optimisation of a brt model for newdata and using a family of gaussian.\
+set.seed(333)  # keep results stable while multiple running\
+\
+brt_example <- gbm.step(data=newdata,\
+                        gbm.x = c(3,4,1,2),     # select predictor variable columns\
+                        gbm.y = 9,              # select response variable column\
+                        family = "gaussian",    # family: nature of error structure, optional: bernoulli/gaussian\
+                        bag.fraction=.5,        \
+                        learning.rate=.001, \
+                        tree.complexity = 10,  \
+                        step.size=10, \
+                        max.trees = 50000) \
+\
+# results: with default 10-fold cross-validation\
+# black is mean, dotted is 1 stdev.   # IMPORTANT TO KNOW\
+\
+#####################---summary results----####################\
+summary(brt_example)\
+rel.inf.df <- as.data.frame(summary(brt_example))\
+# brt_example is now the fitted brt model object, will be used later\
+\
+# check all the results \
+names(brt_example)\
+\
+#####################---plot partial dependency----####################\
+\
+gbm.plot(brt_example, rug = TRUE, plot.layout=c(2,2), n.plots=4, common.scale = TRUE, write.title = TRUE, show.contrib = TRUE, y.label="Fitted function") \
+\
+#####################---other plots----####################\
+\
+# plot the fitted values in relation to each of the predictors used in the model.\
+gbm.plot.fits(brt_example)\
+\
+# assesses the extent to which pairwise interactions exist in the data\
+find.int <- gbm.interactions(brt_example)\
+# a ranked list of the 5 most important pairwise interactions\
+find.int$interactions\
+# tabulating all pairwise interactions\
+find.int$rank.list\
+\
+# plot pairwise interactions like this:\
+gbm.perspec(brt_example, 4, 3, x.range=c(0,60),y.range=c(0,950), z.range=c(0,2.5),theta = 15, phi = 10)\
+# optional parameters e.g.: \
+gbm.perspec(brt_example, 4, 3, y.range=c(0,150), z.range=c(0,50), theta = 30, phi = 15,perspective = TRUE, z.label = "\\nFitted value", y.label = "\\n ", x.label = "\\n ", )\
+\
+\
+########----------PREDICTIONS-for set of stations-----------##############\
+\
+#preds <- predict.gbm(brt_example,brt_tablecopy[,8], n.trees = brt_example$gbm.call$best.trees, type = "response")\
+#calc.deviance(obs = brt_tablecopy[,8], pred=preds, calc.mean = TRUE)\
+\
+###############----spatial predictions-----#######################\
+\
+library(raster)\
+library(maptools)\
+# library(dismo)\
+\
+# call predictor names to match with model\
+var.names <- c(brt_example$var.names)\
+var.names\
+# set working directory to your location of raster file \
+setwd("/Users/name/folder")     \
+\
+############## import raster file ################################################\
+# option 1: choose by hand\
+rflacc <- raster(file.choose())\
+# option 2: choose according to list \
+n <- list.files(pattern = ".tif$") \
+n\
+# create stack \
+preds <- stack(n[1:2,4:5])  \
+preds\
+plot(preds)\
+# creare brick\
+# preds_brick <- bricj(preds)\
+\
+############## predict outcomes for imported rasters using brt trees ##################\
+\
+# option 1: using predict \
+rast.pred <- predict(preds, brt_example,type="response",n.trees = 2000)\
+# option 2: using predict.gbm, parameters order different\
+# rast.pred <- predict.gbm(brt_example, rasters, n.trees = 2100, type = "link", single.tree = FALSE) # rasters is a data.framework\
+\
+summary(rast.pred)\
+length(rast.pred)\
+\
+plot(rast.pred, main'Estimated response variable')\
+\
+wr <- writeRaster(rast.pred, filename="response.tif", format="GTiff", overwrite=TRUE)  # or grd\
+\
+### some references of package tutorials and especially problem-solve hints\
+  # https://stat.ethz.ch/pipermail/r-sig-geo/2014-November/022011.html\
+  # https://stat.ethz.ch/pipermail/r-sig-geo/2010-November/009852.html\
+  # https://stat.ethz.ch/pipermail/r-sig-geo/2010-November/009965.html\
+  # https://stat.ethz.ch/pipermail/r-sig-geo/2010-October/009736.html\
+  # https://stat.ethz.ch/pipermail/r-help/2011-March/272826.html\
+  # http://stackoverflow.com/questions/28777753/predict-to-raster-multinomial-gbm\
+  # https://stat.ethz.ch/pipermail/r-sig-ecology/2010-May/001239.html\
+  # http://onlinelibrary.wiley.com/doi/10.1111/j.1365-2656.2008.01390.x/full\
+  # \
+  # https://cran.r-project.org/web/packages/raster/vignettes/Raster.pdf\
+  # https://cran.r-project.org/web/packages/raster/raster.pdf\
+  \
+  \
+  \
+\
+\
+}
