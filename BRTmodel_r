@@ -1,3 +1,7 @@
+# This code is writted by Meili Feng (meili.feng0116@gmail.com) according to the vinettage and tutorials of packages
+# Feel free to copy, edit and use under informed. Discussion welcomed. 
+# 7 Aug 2016, 15:43. 
+
 library(dismo) # spatial distribution model
 library(gbm) # to generate BRT models
 ### gbm.step --- fit a gbm model to response more variables, using cross-validation to estimate optimal number of trees
@@ -97,10 +101,10 @@ summary(rast.pred)
 length(rast.pred)
 
 plot(rast.pred, main'Estimated response variable')
-
+# save your raster file
 wr <- writeRaster(rast.pred, filename="response.tif", format="GTiff", overwrite=TRUE)  # or grd
 
-### some references of package tutorials and especially problem-solve hints
+### References used: package tutorials and especially problem-solve hints
   # https://stat.ethz.ch/pipermail/r-sig-geo/2014-November/022011.html
   # https://stat.ethz.ch/pipermail/r-sig-geo/2010-November/009852.html
   # https://stat.ethz.ch/pipermail/r-sig-geo/2010-November/009965.html
