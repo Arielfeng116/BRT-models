@@ -23,7 +23,7 @@ brt_example <- gbm.step(data=newdata,
                         family = "gaussian",    # family: nature of error structure, optional: bernoulli/gaussian
                         bag.fraction=.5,        
                         learning.rate=.001, 
-                        tree.complexity = 10,  
+                        tree.complexity = 10,   
                         step.size=10, 
                         max.trees = 50000) 
 
